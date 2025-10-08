@@ -1307,13 +1307,14 @@ existing.qty += qty;
 currentUser.data.investments.push({ symbol, qty, buyPrice: company.price, buyTime: Date.now() });
 }
 
-// PRICE IMPACT: Buying increases price
-const priceImpact = qty * 0.00003; // 0.003% per share
+// PRICE IMPACT: Buying increases price (adds to natural fluctuation)
+const priceImpact = qty * 0.000001; // 0.01% per share
 const newPrice = company.price * (1 + priceImpact);
 company.price = Number(newPrice.toFixed(2));
+company.change = newPrice - company.price; // Update change
 company.history = [...company.history.slice(1), company.price];
 
-// Update price in Supabase
+// Update price in Supabase immediately
 await supabase
 .from('stocks')
 .update({ current_price: company.price })
@@ -1321,6 +1322,7 @@ await supabase
 
 await syncParticipantData();
 renderHeader();
+renderCards(); // Refresh to show new price
 renderInvestments();
 alert("✓ Purchase Successful!\n\nBought " + qty + " shares of " + symbol + "\nAmount Debited: " + formatINR(cost) + "\nRemaining Balance: " + formatINR(currentUser.data.cash));
 }
@@ -1365,13 +1367,15 @@ remaining -= sellQty;
 if(inv.qty === 0) currentUser.data.investments.splice(i,1);
 }
 
-// PRICE IMPACT: Selling decreases price
-const priceImpact = qty * 0.00003; // 0.01% per share
-const newPrice = Math.max(1, company.price * (1 - priceImpact)); // Minimum price of 0.01
+// PRICE IMPACT: Selling decreases price (adds to natural fluctuation)
+const priceImpact = qty * 0.000001; // 0.01% per share
+const oldPrice = company.price;
+const newPrice = Math.max(15, company.price * (1 - priceImpact)); // Minimum price of 0.01
 company.price = Number(newPrice.toFixed(2));
+company.change = company.price - oldPrice; // Update change
 company.history = [...company.history.slice(1), company.price];
 
-// Update price in Supabase
+// Update price in Supabase immediately
 await supabase
 .from('stocks')
 .update({ current_price: company.price })
@@ -1380,10 +1384,11 @@ await supabase
 currentUser.data.cash += totalProceeds;
 await syncParticipantData();
 renderHeader();
+renderCards(); // Refresh to show new price
 renderInvestments();
 alert("✓ Sale Successful!\n\nSold " + qty + " shares of " + symbol + "\nAmount Credited: " + formatINR(totalProceeds) + "\nNew Balance: " + formatINR(currentUser.data.cash));
 }
-
+  
 async function sellInvestment(index){
 const inv = currentUser.data.investments[index];
 if(!inv) return;
@@ -1397,14 +1402,16 @@ if(!showSellConfirmation(inv.symbol, inv.qty, live, proceeds)) {
 return;
 }
 
-// PRICE IMPACT: Selling decreases price
+// PRICE IMPACT: Selling decreases price (adds to natural fluctuation)
 if(company) {
-const priceImpact = inv.qty * 0.00003; // 0.01% per share
-const newPrice = Math.max(1, company.price * (1 - priceImpact));
+const priceImpact = inv.qty * 0.000001; // 0.01% per share
+const oldPrice = company.price;
+const newPrice = Math.max(15, company.price * (1 - priceImpact));
 company.price = Number(newPrice.toFixed(2));
+company.change = company.price - oldPrice; // Update change
 company.history = [...company.history.slice(1), company.price];
 
-// Update price in Supabase
+// Update price in Supabase immediately
 await supabase
 .from('stocks')
 .update({ current_price: company.price })
@@ -1415,10 +1422,10 @@ currentUser.data.investments.splice(index,1);
 currentUser.data.cash += proceeds;
 await syncParticipantData();
 renderHeader();
+renderCards(); // Refresh to show new price
 renderInvestments();
 alert("✓ Sale Successful!\n\n" + (profitLoss>=0 ? '💰 Profit' : '📉 Loss') + ": " + formatINR(Math.abs(profitLoss)) + "\nAmount Credited: " + formatINR(proceeds) + "\nNew Balance: " + formatINR(currentUser.data.cash));
 }
-
   
 async function syncParticipantData(){
 const pIndex = systemState.participants.findIndex(p => p.username === currentUser.username);
