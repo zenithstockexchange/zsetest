@@ -1287,6 +1287,12 @@ Buy / Sell logic
 ------------------------- */
 
 async function buyShares(symbol, qty){
+// Check if market is running
+if(!systemState.marketRunning){
+alert("Market is currently stopped. Trading is not allowed.");
+return;
+}
+    
 if(!qty || qty<=0){ alert("Enter valid quantity"); return; }
 const company = systemState.companies.find(c=>c.symbol===symbol);
 if(!company) return;
@@ -1329,10 +1335,19 @@ alert("✓ Purchase Successful!\n\nBought " + qty + " shares of " + symbol + "\n
 
   
 
+
 async function sellShares(symbol, qty){
+// Check if market is running
+if(!systemState.marketRunning){
+alert("Market is currently stopped. Trading is not allowed.");
+return;
+}
+    
 if(!qty || qty<=0){ alert("Enter valid quantity"); return; }
 let remaining = qty;
 let totalProceeds = 0;
+
+// ... rest of the code remains the same
 
 // Calculate first
 const company = systemState.companies.find(c=>c.symbol===symbol);
@@ -1390,8 +1405,16 @@ alert("✓ Sale Successful!\n\nSold " + qty + " shares of " + symbol + "\nAmount
 }
   
 async function sellInvestment(index){
+// Check if market is running
+if(!systemState.marketRunning){
+alert("Market is currently stopped. Trading is not allowed.");
+return;
+}
+    
 const inv = currentUser.data.investments[index];
 if(!inv) return;
+
+// ... rest of the code remains the same
 const company = systemState.companies.find(c=>c.symbol===inv.symbol);
 const live = company ? company.price : inv.buyPrice;
 const proceeds = live * inv.qty;
