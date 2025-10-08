@@ -1308,7 +1308,7 @@ currentUser.data.investments.push({ symbol, qty, buyPrice: company.price, buyTim
 }
 
 // PRICE IMPACT: Buying increases price
-const priceImpact = qty * 0.0001; // 0.01% per share
+const priceImpact = qty * 0.00003; // 0.003% per share
 const newPrice = company.price * (1 + priceImpact);
 company.price = Number(newPrice.toFixed(2));
 company.history = [...company.history.slice(1), company.price];
